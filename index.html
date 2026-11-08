@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f2a37">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SCOP">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>SCOP STORAGE SYSTEM</title>
+<style>
+/* ============ THEME ============ */
+:root{
+  --ink:#1f2a37; --steel:#334155; --muted:#64748b; --accent:#d97706; --accent-d:#b45309;
+  --bg:#eef1f4; --card:#ffffff; --line:#d5dbe3; --ok:#15803d; --bad:#b91c1c;
+  --in:#166534; --out:#9a3412; --jard:#fef3c7;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);
+  font:15px/1.45 "Segoe UI",Tahoma,"Noto Naskh Arabic","Noto Sans Arabic",Arial,system-ui,sans-serif}
+#app{flex:1;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{margin:0}
+button,input,textarea{font:inherit;color:inherit}
+.ico{width:18px;height:18px;flex:none;vertical-align:-3px}
+
+/* header */
+.top{background:var(--ink);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;max-width:1100px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.06em;font-size:15px}
+.brand .logo{display:inline-grid;place-items:center;width:28px;height:28px;background:var(--accent);color:#1f2a37;border-radius:6px;font-size:14px}
+.bar-actions{display:flex;gap:6px}
+.iconbtn{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;cursor:pointer}
+.iconbtn:hover{background:rgba(255,255,255,.12)}
+.searchbar{display:flex;gap:8px;padding:0 14px 10px;max-width:1100px;margin:0 auto}
+.searchbar input{flex:1;min-width:0;padding:10px 12px;border-radius:8px;border:0;background:#fff;color:var(--ink);font-size:16px}
+
+/* layout */
+.wrap{width:100%;max-width:1100px;margin:0 auto;padding:14px 14px 24px}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:12px}
+.crumbs a{color:var(--accent-d);font-weight:600}
+.crumbs i{font-style:normal;opacity:.6}
+.pagehead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.pagehead h1{font-size:21px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.pad{padding:14px}
+.tile{display:flex;align-items:stretch;border-left:5px solid var(--accent);overflow:hidden}
+.tile-main{flex:1;min-width:0;padding:14px}
+.tile-main:hover{background:#fafbfc}
+.tile-title{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.tile-sub{color:var(--muted);font-size:13px;margin-top:3px}
+.tile-actions{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:6px;border-left:1px solid var(--line)}
+.empty{padding:28px 14px;text-align:center;color:var(--muted)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600;min-height:40px}
+.btn:hover{background:#f3f5f8}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1f2a37}
+.btn.primary:hover{background:#f59e0b}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.sm{padding:5px 8px;min-height:30px;font-size:13px}
+.sq{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--steel)}
+.sq:hover{background:#f3f5f8}
+.sq.del{color:var(--bad)}
+
+/* item list */
+.list{display:flex;flex-direction:column;gap:8px}
+.row-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px}
+.row-item:hover{background:#fafbfc}
+.row-item .t{font-weight:700;overflow-wrap:anywhere}
+.row-item .m{font-size:13px;color:var(--muted)}
+.bal{font-weight:700;white-space:nowrap;text-align:right}
+.bal small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.crumbloc{font-size:12px;color:var(--accent-d);font-weight:600}
+
+/* item card */
+.itemcard{border-top:5px solid var(--accent)}
+.itemhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 14px 8px}
+.itemhead h1{font-size:22px;overflow-wrap:anywhere}
+.itemhead .acts{display:flex;gap:6px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:0;border-top:1px solid var(--line)}
+.fields>div{padding:10px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.fields>div.wide{grid-column:1/-1;border-right:0}
+.fields dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.fields dd{margin:2px 0 0;font-weight:600;overflow-wrap:anywhere}
+.balbox{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f8fafc;border-radius:0 0 10px 10px}
+.balbox b{font-size:24px}
+.sectionbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:18px 0 8px}
+.sectionbar h2{font-size:17px}
+.tablewrap{max-height:62vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14px;white-space:nowrap}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{position:sticky;top:0;background:var(--steel);color:#fff;font-size:12px;letter-spacing:.04em;z-index:1}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.in{color:var(--in);font-weight:600}
+td.out{color:var(--out);font-weight:600}
+tr.jard td{background:var(--jard);font-style:italic}
+td.acts{text-align:right;padding:4px 6px}
+td.acts .sq{width:28px;height:28px}
+td.ref{max-width:180px;overflow:hidden;text-overflow:ellipsis}
+
+/* forms & modal */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+.modal{background:#fff;width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:18px}
+@media(min-width:600px){.overlay{align-items:center;padding:16px}.modal{border-radius:14px}}
+.modal h2{font-size:18px;margin-bottom:10px}
+.hint{font-size:13px;color:var(--muted);margin:0 0 10px}
+.fld{display:block;margin-bottom:12px}
+.fld span{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.fld input,.fld textarea{width:100%;padding:10px 12px;border:1px solid #b8c1cc;border-radius:8px;background:#fff;font-size:16px}
+.fld input:focus,.fld textarea:focus,.searchbar input:focus{outline:3px solid rgba(217,119,6,.35);border-color:var(--accent)}
+.fld input:disabled{background:#eef1f4;color:#94a3b8}
+.err{color:var(--bad);font-size:14px;font-weight:600;min-height:20px;margin-bottom:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row.end{justify-content:flex-end}
+
+/* auth */
+.authbox{max-width:380px;margin:9vh auto 0;padding:24px;text-align:center}
+.authbox h1{font-size:20px;letter-spacing:.06em}
+.authbox .logo{width:54px;height:54px;margin:0 auto 12px;display:grid;place-items:center;background:var(--accent);color:#1f2a37;border-radius:12px;font-size:26px}
+.authbox p{color:var(--muted);font-size:14px}
+.authbox input{text-align:center;letter-spacing:.5em;font-size:22px}
+
+/* toasts */
+#toasts{position:fixed;left:0;right:0;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none;padding:0 12px}
+.toast{background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.3);font-weight:600;max-width:520px}
+.toast.ok{border-left:5px solid #22c55e}
+.toast.err{border-left:5px solid #ef4444}
+
+/* settings */
+.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.setgrid .card h3{margin-bottom:6px}
+.setgrid .card p{color:var(--muted);font-size:14px;margin:0 0 10px}
+.stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);font-size:14px}
+
+/* credit */
+.credit{text-align:center;font-size:8px;line-height:1;color:#94a3b8;opacity:.7;padding:6px 0 10px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   PART 1 — PURE LOGIC (no DOM). Balance rules, validation, PIN hashing.
+   ===================================================================== */
+/*LOGIC-START*/
+const JARD_WORDS = ['jard', 'جرد'];
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function normDigits(s){
+  return String(s == null ? '' : s)
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/٫/g, '.');
+}
+function roundQty(n){ return Math.round(n * 1000) / 1000; }
+function fmt(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits: 3 }); }
+function isJard(ref){ return JARD_WORDS.includes(String(ref == null ? '' : ref).trim().toLowerCase()); }
+function isValidDate(s){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const y = +s.slice(0, 4);
+  if(y < 1990 || y > 2100) return false;
+  const d = new Date(s + 'T00:00:00Z');
+  return !isNaN(d) && d.toISOString().slice(0, 10) === s;
+}
+function parseQty(raw){
+  const s = normDigits(raw).trim();
+  if(s === '') return { blank: true };
+  if(!/^\d+(\.\d{1,3})?$/.test(s)) return { error: 'enter a positive number (up to 3 decimals).' };
+  const v = parseFloat(s);
+  if(!(v > 0)) return { error: 'must be greater than zero.' };
+  if(v > 1e9) return { error: 'number is too large.' };
+  return { value: roundQty(v) };
+}
+
+/* Build a validated movement from raw form input. Jard never carries a quantity. */
+function buildMovement(input){
+  const date = String(input.date || '').trim();
+  if(!isValidDate(date)) return { error: 'Enter a valid date.' };
+  const ref = String(input.ref || '').trim().replace(/\s+/g, ' ');
+  if(!ref) return { error: 'Enter the M.R.V / MIV number (or the word Jard for a physical inventory check).' };
+  if(ref.length > 60) return { error: 'The document number is too long (max 60 characters).' };
+  const i = parseQty(input.inQty), o = parseQty(input.outQty);
+  if(i.error) return { error: 'Incoming: ' + i.error };
+  if(o.error) return { error: 'Outgoing: ' + o.error };
+  if(isJard(ref)){
+    if(!i.blank || !o.blank) return { error: '"Jard" is only a reference. Leave Incoming and Outgoing empty.' };
+    return { movement: { date, ref, type: 'jard', qty: 0 } };
+  }
+  if(i.blank && o.blank) return { error: 'Enter an incoming or an outgoing quantity.' };
+  if(!i.blank && !o.blank) return { error: 'Enter either Incoming or Outgoing, not both.' };
+  return { movement: { date, ref, type: i.blank ? 'out' : 'in', qty: i.blank ? o.value : i.value } };
+}
+
+/* Chronological order: by date, then by entry order (seq). */
+function orderMovements(list){
+  return list.map((m, i) => ({ m, i })).sort((a, b) => {
+    if(a.m.date !== b.m.date) return a.m.date < b.m.date ? -1 : 1;
+    const sa = a.m.seq == null ? a.i : a.m.seq, sb = b.m.seq == null ? b.i : b.m.seq;
+    return (sa - sb) || (a.i - b.i);
+  }).map(x => x.m);
+}
+
+/* New Balance = Previous Balance + Incoming - Outgoing. Jard changes nothing. */
+function computeLedger(list){
+  let bal = 0, negative = null;
+  const rows = [];
+  for(const m of orderMovements(list)){
+    const before = bal;
+    if(m.type === 'in') bal = roundQty(bal + m.qty);
+    else if(m.type === 'out') bal = roundQty(bal - m.qty);
+    if(bal < 0 && !negative) negative = { movement: m, available: before };
+    rows.push(Object.assign({}, m, { balance: bal }));
+  }
+  return { rows, balance: bal, negative };
+}
+function ledgerError(list){
+  const n = computeLedger(list).negative;
+  if(!n) return null;
+  return 'Outgoing ' + fmt(n.movement.qty) + ' on ' + n.movement.date + ' exceeds the available balance (' + fmt(n.available) + ').';
+}
+
+/* ---- SHA-256 (pure JS, works on file:// and any WebView) + iterated PIN hash ---- */
+const SHA_K = new Uint32Array([
+0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+function sha256Bytes(data){
+  const l = data.length;
+  const padded = new Uint8Array(((l + 9 + 63) >> 6) << 6);
+  padded.set(data); padded[l] = 0x80;
+  const dv = new DataView(padded.buffer);
+  dv.setUint32(padded.length - 8, Math.floor(l / 0x20000000));
+  dv.setUint32(padded.length - 4, (l << 3) >>> 0);
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const w = new Uint32Array(64);
+  const rr = (x, n) => (x >>> n) | (x << (32 - n));
+  for(let off = 0; off < padded.length; off += 64){
+    for(let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
+    for(let i = 16; i < 64; i++){
+      const s0 = rr(w[i-15],7) ^ rr(w[i-15],18) ^ (w[i-15] >>> 3);
+      const s1 = rr(w[i-2],17) ^ rr(w[i-2],19) ^ (w[i-2] >>> 10);
+      w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for(let i = 0; i < 64; i++){
+      const S1 = rr(e,6) ^ rr(e,11) ^ rr(e,25);
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + SHA_K[i] + w[i]) >>> 0;
+      const S0 = rr(a,2) ^ rr(a,13) ^ rr(a,22);
+      const mj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + mj) >>> 0;
+      h=g; g=f; f=e; e=(d + t1) >>> 0; d=c; c=b; b=a; a=(t1 + t2) >>> 0;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0;
+    h4=(h4+e)>>>0; h5=(h5+f)>>>0; h6=(h6+g)>>>0; h7=(h7+h)>>>0;
+  }
+  const out = new Uint8Array(32), ov = new DataView(out.buffer);
+  [h0,h1,h2,h3,h4,h5,h6,h7].forEach((v, i) => ov.setUint32(i * 4, v));
+  return out;
+}
+function toHex(u8){ return Array.from(u8, b => b.toString(16).padStart(2, '0')).join(''); }
+function hashPin(pin, salt, iter){
+  iter = iter || 20000;
+  const base = new TextEncoder().encode(salt + ':' + pin);
+  let h = sha256Bytes(base);
+  for(let i = 1; i < iter; i++){
+    const buf = new Uint8Array(h.length + base.length);
+    buf.set(h); buf.set(base, h.length);
+    h = sha256Bytes(buf);
+  }
+  return toHex(h);
+}
+function randomSalt(){
+  const a = new Uint8Array(16);
+  if(typeof crypto !== 'undefined' && crypto.getRandomValues) crypto.getRandomValues(a);
+  else for(let i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256);
+  return toHex(a);
+}
+function safeEq(a, b){
+  if(a.length !== b.length) return false;
+  let r = 0;
+  for(let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
+}
+function isValidPin(p){ return /^\d{6}$/.test(p); }
+
+/* Normalise + validate data (used for backups and for loading stored data).
+   strict=true  -> reject anything inconsistent (backup import).
+   strict=false -> tolerant load; never throws away records. */
+function normalizeData(raw, strict){
+  if(!raw || typeof raw !== 'object') return { ok: false, error: 'This file is not a valid SCOP backup.' };
+  if(raw.data && typeof raw.data === 'object' && Array.isArray(raw.data.sections)) raw = raw.data;
+  if(![raw.sections, raw.locations, raw.items].every(Array.isArray))
+    return { ok: false, error: 'The backup is missing sections, locations or items.' };
+  const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+  const out = { schema: 1, sections: [], locations: [], items: [] };
+  try{
+    const secIds = new Set(), locIds = new Set(), itemIds = new Set();
+    for(const s of raw.sections){
+      const id = str(s && s.id, 64), name = str(s && s.name, 80);
+      if(!id || !name) throw new Error('A section is missing its id or name.');
+      if(secIds.has(id) && strict) throw new Error('Duplicate section id found.');
+      secIds.add(id); out.sections.push({ id, name });
+    }
+    for(const l of raw.locations){
+      const id = str(l && l.id, 64), name = str(l && l.name, 80), sectionId = str(l && l.sectionId, 64);
+      if(!id || !name) throw new Error('A storage location is missing its id or name.');
+      if(strict && (locIds.has(id) || !secIds.has(sectionId))) throw new Error('A storage location is duplicated or points to a missing section.');
+      locIds.add(id); out.locations.push({ id, sectionId, name });
+    }
+    for(const it of raw.items){
+      const id = str(it && it.id, 64), name = str(it && it.name, 120), locationId = str(it && it.locationId, 64);
+      if(!id || !name) throw new Error('An item card is missing its id or name.');
+      if(strict && (itemIds.has(id) || !locIds.has(locationId))) throw new Error('An item card is duplicated or points to a missing location.');
+      itemIds.add(id);
+      const mvIn = Array.isArray(it.movements) ? it.movements : [];
+      const mvIds = new Set(), movements = [];
+      let maxSeq = 0;
+      mvIn.forEach((m, idx) => {
+        let type = m && m.type;
+        if(type !== 'in' && type !== 'out' && type !== 'jard'){
+          if(strict) throw new Error('Item "' + name + '" has a movement of unknown type.');
+          type = 'jard';
+        }
+        const date = str(m && m.date, 10);
+        if(strict && !isValidDate(date)) throw new Error('Item "' + name + '" has a movement with an invalid date.');
+        let qty = type === 'jard' ? 0 : roundQty(Number(m && m.qty));
+        if(type !== 'jard' && !(qty > 0)){
+          if(strict) throw new Error('Item "' + name + '" has a movement with an invalid quantity.');
+          qty = 0;
+        }
+        let mid = str(m && m.id, 64);
+        if(!mid || mvIds.has(mid)) mid = uid() + idx;
+        mvIds.add(mid);
+        const seq = Number.isFinite(m && m.seq) ? m.seq : idx + 1;
+        if(seq > maxSeq) maxSeq = seq;
+        movements.push({ id: mid, date, ref: str(m && m.ref, 60), type, qty, seq });
+      });
+      if(strict){
+        const err = ledgerError(movements);
+        if(err) throw new Error('Item "' + name + '": ' + err);
+      }
+      out.items.push({
+        id, locationId, name, vocab: str(it.vocab, 60), bin: str(it.bin, 60), unit: str(it.unit, 30),
+        description: str(it.description, 300), seq: maxSeq, movements
+      });
+    }
+  }catch(e){ return { ok: false, error: e.message }; }
+  return { ok: true, data: out };
+}
+/*LOGIC-END*/
+
+/* =====================================================================
+   PART 2 — STORAGE (IndexedDB, with localStorage fallback)
+   ===================================================================== */
+const store = {
+  mode: 'idb', db: null,
+  async open(){
+    try{
+      this.db = await new Promise((res, rej) => {
+        const r = indexedDB.open('scop-storage-system', 1);
+        r.onupgradeneeded = () => { r.result.createObjectStore('kv'); };
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+        r.onblocked = () => rej(new Error('blocked'));
+      });
+    }catch(e){ this.mode = 'ls'; }
+  },
+  get(k){
+    if(this.mode === 'ls'){
+      try{ const v = localStorage.getItem('scop:' + k); return Promise.resolve(v ? JSON.parse(v) : null); }
+      catch(e){ return Promise.resolve(null); }
+    }
+    return new Promise((res, rej) => {
+      const q = this.db.transaction('kv', 'readonly').objectStore('kv').get(k);
+      q.onsuccess = () => res(q.result === undefined ? null : q.result);
+      q.onerror = () => rej(q.error);
+    });
+  },
+  set(k, v){
+    if(this.mode === 'ls'){
+      try{ localStorage.setItem('scop:' + k, JSON.stringify(v)); return Promise.resolve(); }
+      catch(e){ return Promise.reject(e); }
+    }
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(v, k);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+      tx.onabort = () => rej(tx.error || new Error('aborted'));
+    });
+  }
+};
+
+/* =====================================================================
+   PART 3 — APP STATE
+   ===================================================================== */
+let state = null;          // { schema, sections, locations, items }
+let auth = null;           // { salt, hash, iter, fails, lockUntil }
+let meta = {};             // { lastBackupAt, prebackupAt }
+let unlocked = false;
+let fatal = null;          // { message, raw }
+let currentQ = '';
+let saveChain = Promise.resolve();
+let modalCancelCb = null;
+let idleTimer = null;
+
+const $ = (s, r) => (r || document).querySelector(s);
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function clean(s){ return String(s || '').trim().replace(/\s+/g, ' '); }
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function seedState(){
+  return {
+    schema: 1,
+    sections: [{ id: uid() + 'a', name: 'Al-Raranjiya Warehouses' }, { id: uid() + 'b', name: 'Al-Latifiyah Warehouses' }],
+    locations: [], items: []
+  };
+}
+function saveState(){
+  const snap = JSON.parse(JSON.stringify(state));
+  saveChain = saveChain.catch(() => {}).then(() => store.set('data', snap));
+  return saveChain;
+}
+function saveMeta(){ return store.set('meta', meta).catch(() => {}); }
+async function commit(msg){
+  try{ await saveState(); if(msg) toast(msg, 'ok'); }
+  catch(e){ toast('Saving failed. Storage may be full or blocked. Export a backup now.', 'err'); }
+  render();
+}
+
+/* =====================================================================
+   PART 4 — UI HELPERS (icons, toasts, modals)
+   ===================================================================== */
+const ICONS = {
+  edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+  trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+  down:'<path d="M6 9l6 6 6-6M6 4h12"/>',
+  dl:'<path d="M12 3v12M7 10l5 5 5-5M4 20h16"/>',
+  ul:'<path d="M12 21V9M7 14l5-5 5 5M4 4h16"/>'
+};
+function ico(n){ return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>'; }
+function sqBtn(act, icon, title, attrs, cls){
+  return '<button class="sq ' + (cls || '') + '" data-act="' + act + '" ' + (attrs || '') + ' title="' + title + '" aria-label="' + title + '">' + ico(icon) + '</button>';
+}
+
+function toast(msg, type){
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || 'ok');
+  t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.remove(), type === 'err' ? 5000 : 2600);
+}
+function openModal(html){
+  const root = $('#modal-root');
+  root.innerHTML = '<div class="overlay"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
+  return root.querySelector('.modal');
+}
+function closeModal(){ modalCancelCb = null; $('#modal-root').innerHTML = ''; }
+function cancelModal(){ const cb = modalCancelCb; closeModal(); if(cb) cb(); }
+
+function formModal(o){
+  const body = o.fields.map(f => {
+    const common = 'name="' + f.name + '" ' + (f.max ? 'maxlength="' + f.max + '" ' : '') + 'autocomplete="off"';
+    const input = f.type === 'textarea'
+      ? '<textarea ' + common + ' rows="3" dir="auto">' + esc(f.value || '') + '</textarea>'
+      : '<input ' + common + ' type="' + (f.type || 'text') + '" value="' + esc(f.value || '') + '"' +
+        (f.inputmode ? ' inputmode="' + f.inputmode + '"' : '') + ' dir="' + (f.dir || 'auto') + '">';
+    return '<label class="fld"><span>' + esc(f.label) + (f.required ? ' *' : '') + '</span>' + input + '</label>';
+  }).join('');
+  const m = openModal('<h2>' + esc(o.title) + '</h2>' + (o.hint ? '<p class="hint">' + o.hint + '</p>' : '') +
+    '<form novalidate>' + body + '<div class="err" role="alert"></div><div class="row end">' +
+    '<button type="button" class="btn" data-close>Cancel</button>' +
+    '<button type="submit" class="btn primary">' + esc(o.submit || 'Save') + '</button></div></form>');
+  const form = m.querySelector('form');
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const vals = {};
+    o.fields.forEach(f => { vals[f.name] = form.elements[f.name].value; });
+    const err = await o.onSubmit(vals);
+    if(err) m.querySelector('.err').textContent = err; else closeModal();
+  });
+  if(o.onReady) o.onReady(form);
+  const first = form.querySelector('input,textarea');
+  if(first) setTimeout(() => first.focus(), 30);
+}
+function confirmBox(title, msgHtml, okLabel, danger){
+  return new Promise(resolve => {
+    const m = openModal('<h2>' + esc(title) + '</h2><p>' + msgHtml + '</p><div class="row end">' +
+      '<button class="btn" data-close>Cancel</button>' +
+      '<button class="btn ' + (danger === false ? 'primary' : 'danger') + '" data-ok>' + esc(okLabel || 'Delete') + '</button></div>');
+    modalCancelCb = () => resolve(false);
+    m.querySelector('[data-ok]').addEventListener('click', () => { closeModal(); resolve(true); });
+    m.querySelector('[data-ok]').focus();
+  });
+}
+
+/* =====================================================================
+   PART 5 — VIEWS
+   ===================================================================== */
+const CREDIT = '<footer class="credit">علي عسكر صالح</footer>';
+
+function parseRoute(){
+  const h = (location.hash || '#/').slice(1);
+  const p = h.split('/');            // ['', 's', id]
+  if(p[1] === 's' && p[2]) return { name: 'section', id: decodeURIComponent(p[2]) };
+  if(p[1] === 'l' && p[2]) return { name: 'location', id: decodeURIComponent(p[2]) };
+  if(p[1] === 'i' && p[2]) return { name: 'item', id: decodeURIComponent(p[2]) };
+  if(p[1] === 'search') return { name: 'search', q: decodeURIComponent(p.slice(2).join('/') || '') };
+  if(p[1] === 'backup') return { name: 'backup' };
+  return { name: 'home' };
+}
+function crumbs(list){
+  return '<nav class="crumbs">' + list.map(c => c.href
+    ? '<a href="' + c.href + '" dir="auto">' + esc(c.t) + '</a>' : '<span dir="auto">' + esc(c.t) + '</span>').join('<i>›</i>') + '</nav>';
+}
+function shell(crumbHtml, body){
+  return '<header class="top"><div class="bar"><a class="brand" href="#/"><span class="logo">▣</span><span>SCOP STORAGE SYSTEM</span></a>' +
+    '<div class="bar-actions"><a class="iconbtn" href="#/backup" title="Backup &amp; Settings" aria-label="Backup and Settings">' + ico('gear') + '</a>' +
+    '<button class="iconbtn" data-act="lock" title="Lock" aria-label="Lock">' + ico('lock') + '</button></div></div>' +
+    '<form class="searchbar" data-form="search"><input type="search" name="q" dir="auto" autocomplete="off" placeholder="Search material, vocab no., bin no., description…" value="' + esc(currentQ) + '">' +
+    '<button class="btn primary" type="submit">Search</button></form></header>' +
+    '<main class="wrap">' + crumbHtml + body + '</main>' + CREDIT;
+}
+function counts(){
+  const locItems = {}, secLocs = {}, secItems = {};
+  const locSec = {};
+  state.locations.forEach(l => { locSec[l.id] = l.sectionId; secLocs[l.sectionId] = (secLocs[l.sectionId] || 0) + 1; });
+  state.items.forEach(i => {
+    locItems[i.locationId] = (locItems[i.locationId] || 0) + 1;
+    const s = locSec[i.locationId];
+    if(s) secItems[s] = (secItems[s] || 0) + 1;
+  });
+  return { locItems, secLocs, secItems };
+}
+
+function viewHome(){
+  const c = counts();
+  const tiles = state.sections.map(s =>
+    '<div class="card tile"><a class="tile-main" href="#/s/' + encodeURIComponent(s.id) + '"><div class="tile-title" dir="auto">' + esc(s.name) + '</div>' +
+    '<div class="tile-sub">' + (c.secLocs[s.id] || 0) + ' locations · ' + (c.secItems[s.id] || 0) + ' items</div></a>' +
+    '<div class="tile-actions">' + sqBtn('edit-section', 'edit', 'Rename section', 'data-id="' + s.id + '"') +
+    sqBtn('del-section', 'trash', 'Delete section', 'data-id="' + s.id + '"', 'del') + '</div></div>').join('');
+  return shell(crumbs([{ t: 'Main Sections' }]),
+    '<div class="pagehead"><h1>Main Sections</h1><button class="btn primary" data-act="add-section">' + ico('plus') + ' Add Section</button></div>' +
+    (tiles ? '<div class="grid">' + tiles + '</div>' : '<div class="card empty">No sections yet. Tap “Add Section” to create the first one.</div>'));
+}
+
+function viewSection(id){
+  const s = state.sections.find(x => x.id === id);
+  if(!s) return viewMissing();
+  const c = counts();
+  const locs = state.locations.filter(l => l.sectionId === id);
+  const tiles = locs.map(l =>
+    '<div class="card tile"><a class="tile-main" href="#/l/' + encodeURIComponent(l.id) + '"><div class="tile-title" dir="auto">' + esc(l.name) + '</div>' +
+    '<div class="tile-sub">' + (c.locItems[l.id] || 0) + ' item cards</div></a>' +
+    '<div class="tile-actions">' + sqBtn('edit-loc', 'edit', 'Rename location', 'data-id="' + l.id + '"') +
+    sqBtn('del-loc', 'trash', 'Delete location', 'data-id="' + l.id + '"', 'del') + '</div></div>').join('');
+  return shell(crumbs([{ t: 'Main Sections', href: '#/' }, { t: s.name }]),
+    '<div class="pagehead"><h1 dir="auto">' + esc(s.name) + '</h1><button class="btn primary" data-act="add-loc" data-id="' + s.id + '">' + ico('plus') + ' Add Storage Location</button></div>' +
+    (tiles ? '<div class="grid">' + tiles + '</div>' : '<div class="card empty">No storage locations in this section yet.</div>'));
+}
+
+function viewLocation(id){
+  const l = state.locations.find(x => x.id === id);
+  if(!l) return viewMissing();
+  const s = state.sections.find(x => x.id === l.sectionId);
+  const items = state.items.filter(i => i.locationId === id);
+  const rows = items.map(i => {
+    const b = computeLedger(i.movements).balance;
+    return '<a class="card row-item" href="#/i/' + encodeURIComponent(i.id) + '"><div><div class="t" dir="auto">' + esc(i.name) + '</div>' +
+      '<div class="m">Vocab: ' + esc(i.vocab || '—') + ' · Bin: ' + esc(i.bin || '—') + '</div></div>' +
+      '<div class="bal">' + fmt(b) + '<small>' + esc(i.unit || '') + '</small></div></a>';
+  }).join('');
+  return shell(crumbs([{ t: 'Main Sections', href: '#/' }, { t: s ? s.name : '?', href: s ? '#/s/' + encodeURIComponent(s.id) : '#/' }, { t: l.name }]),
+    '<div class="pagehead"><h1 dir="auto">' + esc(l.name) + '</h1><button class="btn primary" data-act="add-item" data-id="' + l.id + '">' + ico('plus') + ' Add Item Card</button></div>' +
+    (rows ? '<div class="list">' + rows + '</div>' : '<div class="card empty">No item cards in this location yet.</div>'));
+}
+
+function viewItem(id){
+  const it = state.items.find(x => x.id === id);
+  if(!it) return viewMissing();
+  const l = state.locations.find(x => x.id === it.locationId);
+  const s = l && state.sections.find(x => x.id === l.sectionId);
+  const led = computeLedger(it.movements);
+  const rows = led.rows.map(m => {
+    const isJ = m.type === 'jard';
+    return '<tr class="' + (isJ ? 'jard' : '') + '"><td>' + esc(m.date) + '</td><td class="ref" dir="auto">' + esc(m.ref) + '</td>' +
+      '<td class="n in">' + (m.type === 'in' ? fmt(m.qty) : '—') + '</td>' +
+      '<td class="n out">' + (m.type === 'out' ? fmt(m.qty) : '—') + '</td>' +
+      '<td class="n"><b>' + fmt(m.balance) + '</b></td>' +
+      '<td class="acts">' + sqBtn('edit-mv', 'edit', 'Edit movement', 'data-id="' + it.id + '" data-mv="' + m.id + '"') +
+      sqBtn('del-mv', 'trash', 'Delete movement', 'data-id="' + it.id + '" data-mv="' + m.id + '"', 'del') + '</td></tr>';
+  }).join('');
+  const table = rows
+    ? '<div class="tablewrap" id="ledger"><table><thead><tr><th>Date</th><th>M.R.V / MIV No.</th><th class="n">Incoming</th><th class="n">Outgoing</th><th class="n">Balance</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+    : '<div class="card empty">No movements recorded yet.</div>';
+  const crumbList = [{ t: 'Main Sections', href: '#/' }];
+  if(s) crumbList.push({ t: s.name, href: '#/s/' + encodeURIComponent(s.id) });
+  if(l) crumbList.push({ t: l.name, href: '#/l/' + encodeURIComponent(l.id) });
+  crumbList.push({ t: it.name });
+  return shell(crumbs(crumbList),
+    '<div class="card itemcard"><div class="itemhead"><h1 dir="auto">' + esc(it.name) + '</h1><div class="acts">' +
+    sqBtn('edit-item', 'edit', 'Edit item card', 'data-id="' + it.id + '"') + sqBtn('del-item', 'trash', 'Delete item card', 'data-id="' + it.id + '"', 'del') + '</div></div>' +
+    '<dl class="fields"><div><dt>Vocab No.</dt><dd dir="auto">' + esc(it.vocab || '—') + '</dd></div><div><dt>Bin No.</dt><dd dir="auto">' + esc(it.bin || '—') + '</dd></div>' +
+    '<div><dt>Unit</dt><dd dir="auto">' + esc(it.unit || '—') + '</dd></div><div class="wide"><dt>Description</dt><dd dir="auto">' + esc(it.description || '—') + '</dd></div></dl>' +
+    '<div class="balbox"><span>Current balance</span><span><b>' + fmt(led.balance) + '</b> ' + esc(it.unit || '') + '</span></div></div>' +
+    '<div class="sectionbar"><h2>Movement History</h2><div class="row">' +
+    (rows ? '<button class="btn sm" data-act="jump-latest">' + ico('down') + ' Latest</button>' : '') +
+    '<button class="btn primary" data-act="add-mv" data-id="' + it.id + '">' + ico('plus') + ' Add Movement</button></div></div>' + table);
+}
+
+function viewSearch(q){
+  const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+  let body;
+  if(!tokens.length) body = '<div class="card empty">Type something to search.</div>';
+  else{
+    const found = state.items.filter(i => {
+      const hay = [i.name, i.vocab, i.bin, i.description].join(' ').toLowerCase();
+      return tokens.every(t => hay.includes(t));
+    });
+    body = found.length ? '<div class="list">' + found.map(i => {
+      const l = state.locations.find(x => x.id === i.locationId);
+      const s = l && state.sections.find(x => x.id === l.sectionId);
+      return '<a class="card row-item" href="#/i/' + encodeURIComponent(i.id) + '"><div><div class="t" dir="auto">' + esc(i.name) + '</div>' +
+        '<div class="crumbloc" dir="auto">' + esc(s ? s.name : '?') + ' › ' + esc(l ? l.name : '?') + '</div>' +
+        '<div class="m">Vocab: ' + esc(i.vocab || '—') + ' · Bin: ' + esc(i.bin || '—') + '</div></div>' +
+        '<div class="bal">' + fmt(computeLedger(i.movements).balance) + '<small>' + esc(i.unit || '') + '</small></div></a>';
+    }).join('') + '</div>' : '<div class="card empty">No items match “' + esc(q) + '”.</div>';
+    body = '<p class="hint">' + found.length + ' result(s)</p>' + body;
+  }
+  return shell(crumbs([{ t: 'Main Sections', href: '#/' }, { t: 'Search' }]), '<div class="pagehead"><h1>Search</h1></div>' + body);
+}
+
+function viewBackup(){
+  let mv = 0;
+  state.items.forEach(i => { mv += i.movements.length; });
+  const last = meta.lastBackupAt ? new Date(meta.lastBackupAt).toLocaleString() : 'never';
+  return shell(crumbs([{ t: 'Main Sections', href: '#/' }, { t: 'Backup & Settings' }]),
+    '<div class="pagehead"><h1>Backup &amp; Settings</h1></div><div class="setgrid">' +
+    '<div class="card pad"><h3>Download backup</h3><p>Saves every section, location, item card and movement to a file. Last backup: <b>' + esc(last) + '</b>.</p>' +
+    '<button class="btn primary" data-act="export">' + ico('dl') + ' Download backup file</button></div>' +
+    '<div class="card pad"><h3>Restore from backup</h3><p>Replaces all current data with the backup file. A safety copy of the current data is kept so you can undo.</p>' +
+    '<div class="row"><button class="btn" data-act="import">' + ico('ul') + ' Choose backup file</button>' +
+    (meta.prebackupAt ? '<button class="btn" data-act="undo-restore">Undo last restore</button>' : '') + '</div>' +
+    '<input type="file" id="importFile" accept=".json,application/json" hidden></div>' +
+    '<div class="card pad"><h3>Access PIN</h3><p>Change the six-digit PIN used to open the app.</p><button class="btn" data-act="change-pin">Change PIN</button></div>' +
+    '<div class="card pad"><h3>Stored data</h3>' +
+    '<div class="stat"><span>Sections</span><b>' + state.sections.length + '</b></div><div class="stat"><span>Storage locations</span><b>' + state.locations.length + '</b></div>' +
+    '<div class="stat"><span>Item cards</span><b>' + state.items.length + '</b></div><div class="stat"><span>Movements</span><b>' + mv + '</b></div>' +
+    '<div class="stat"><span>Storage engine</span><b>' + (store.mode === 'idb' ? 'IndexedDB' : 'localStorage') + '</b></div></div></div>');
+}
+function viewMissing(){
+  return shell(crumbs([{ t: 'Main Sections', href: '#/' }]), '<div class="card empty">This page no longer exists. <a href="#/"><b>Go to Main Sections</b></a></div>');
+}
+
+function viewSetup(){
+  return '<div class="card authbox"><div class="logo">▣</div><h1>SCOP STORAGE SYSTEM</h1>' +
+    '<p>First launch: create a six-digit access PIN. You will need it every time the app opens.</p>' +
+    '<form data-form="setup"><label class="fld"><span>New PIN</span><input name="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></label>' +
+    '<label class="fld"><span>Repeat PIN</span><input name="pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></label>' +
+    '<div class="err" role="alert"></div><button class="btn primary" type="submit" style="width:100%">Create PIN</button></form></div>' + CREDIT;
+}
+function viewLock(){
+  return '<div class="card authbox"><div class="logo">▣</div><h1>SCOP STORAGE SYSTEM</h1><p>Enter your six-digit PIN</p>' +
+    '<form data-form="unlock"><label class="fld"><input name="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="PIN"></label>' +
+    '<div class="err" role="alert"></div><button class="btn primary" type="submit" style="width:100%">Unlock</button></form></div>' + CREDIT;
+}
+function viewFatal(){
+  return '<div class="card authbox"><h1>Stored data could not be read</h1><p>' + esc(fatal.message) + '</p>' +
+    '<p>Nothing has been changed or deleted. Download the raw data below and keep it safe.</p><button class="btn primary" data-act="dl-raw">Download raw data</button></div>' + CREDIT;
+}
+
+/* =====================================================================
+   PART 6 — RENDER + ROUTING
+   ===================================================================== */
+function render(){
+  const app = $('#app');
+  try{
+    if(fatal){ app.innerHTML = viewFatal(); return; }
+    if(!auth){ app.innerHTML = viewSetup(); focusPin(); return; }
+    if(!unlocked){ app.innerHTML = viewLock(); focusPin(); return; }
+    const r = parseRoute();
+    currentQ = r.name === 'search' ? r.q : '';
+    let html;
+    switch(r.name){
+      case 'section': html = viewSection(r.id); break;
+      case 'location': html = viewLocation(r.id); break;
+      case 'item': html = viewItem(r.id); break;
+      case 'search': html = viewSearch(r.q); break;
+      case 'backup': html = viewBackup(); break;
+      default: html = viewHome();
+    }
+    app.innerHTML = html;
+    const lw = $('#ledger');
+    if(lw) lw.scrollTop = lw.scrollHeight;
+  }catch(e){
+    console.error(e);
+    app.innerHTML = '<div class="wrap"><div class="card pad">Something went wrong: ' + esc(e.message) + ' <a href="#/"><b>Home</b></a></div></div>' + CREDIT;
+  }
+}
+function focusPin(){ const el = document.querySelector('input[name=pin]'); if(el) setTimeout(() => el.focus(), 30); }
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
+
+/* =====================================================================
+   PART 7 — ACTIONS (sections, locations, items, movements)
+   ===================================================================== */
+function sectionForm(sec){
+  formModal({
+    title: sec ? 'Edit Section' : 'Add Section',
+    fields: [{ name: 'name', label: 'Section name', value: sec ? sec.name : '', required: true, max: 80 }],
+    onSubmit: async v => {
+      const n = clean(v.name);
+      if(!n) return 'Section name is required.';
+      if(state.sections.some(s => (!sec || s.id !== sec.id) && s.name.toLowerCase() === n.toLowerCase())) return 'A section with this name already exists.';
+      if(sec) sec.name = n; else state.sections.push({ id: uid(), name: n });
+      await commit(sec ? 'Section updated.' : 'Section added.');
+    }
+  });
+}
+async function deleteSection(id){
+  const s = state.sections.find(x => x.id === id); if(!s) return;
+  const locIds = state.locations.filter(l => l.sectionId === id).map(l => l.id);
+  const items = state.items.filter(i => locIds.includes(i.locationId));
+  const ok = await confirmBox('Delete section?', 'Delete <b dir="auto">' + esc(s.name) + '</b> together with its <b>' + locIds.length + '</b> storage locations, <b>' + items.length + '</b> item cards and all their movements? This cannot be undone. Download a backup first if unsure.');
+  if(!ok) return;
+  state.items = state.items.filter(i => !locIds.includes(i.locationId));
+  state.locations = state.locations.filter(l => l.sectionId !== id);
+  state.sections = state.sections.filter(x => x.id !== id);
+  await commit('Section deleted.');
+}
+
+function locationForm(sectionId, loc){
+  formModal({
+    title: loc ? 'Edit Storage Location' : 'Add Storage Location',
+    fields: [{ name: 'name', label: 'Location name', value: loc ? loc.name : '', required: true, max: 80 }],
+    onSubmit: async v => {
+      const n = clean(v.name);
+      if(!n) return 'Location name is required.';
+      const sid = loc ? loc.sectionId : sectionId;
+      if(state.locations.some(l => l.sectionId === sid && (!loc || l.id !== loc.id) && l.name.toLowerCase() === n.toLowerCase())) return 'This section already has a location with that name.';
+      if(loc) loc.name = n; else state.locations.push({ id: uid(), sectionId: sid, name: n });
+      await commit(loc ? 'Location updated.' : 'Location added.');
+    }
+  });
+}
+async function deleteLocation(id){
+  const l = state.locations.find(x => x.id === id); if(!l) return;
+  const n = state.items.filter(i => i.locationId === id).length;
+  const ok = await confirmBox('Delete storage location?', 'Delete <b dir="auto">' + esc(l.name) + '</b> with its <b>' + n + '</b> item cards and all their movements? This cannot be undone.');
+  if(!ok) return;
+  state.items = state.items.filter(i => i.locationId !== id);
+  state.locations = state.locations.filter(x => x.id !== id);
+  await commit('Location deleted.');
+}
+
+function itemForm(locationId, it){
+  formModal({
+    title: it ? 'Edit Item Card' : 'Add Item Card',
+    fields: [
+      { name: 'name', label: 'Material name (card title)', value: it ? it.name : '', required: true, max: 120 },
+      { name: 'vocab', label: 'Vocab No.', value: it ? it.vocab : '', max: 60 },
+      { name: 'bin', label: 'Bin No.', value: it ? it.bin : '', max: 60 },
+      { name: 'unit', label: 'Unit', value: it ? it.unit : '', max: 30 },
+      { name: 'description', label: 'Description', type: 'textarea', value: it ? it.description : '', max: 300 }
+    ],
+    onSubmit: async v => {
+      const n = clean(v.name);
+      if(!n) return 'Material name is required.';
+      const data = { name: n, vocab: clean(v.vocab), bin: clean(v.bin), unit: clean(v.unit), description: clean(v.description) };
+      if(it) Object.assign(it, data);
+      else state.items.push(Object.assign({ id: uid(), locationId, seq: 0, movements: [] }, data));
+      await commit(it ? 'Item card updated.' : 'Item card added.');
+    }
+  });
+}
+async function deleteItem(id){
+  const it = state.items.find(x => x.id === id); if(!it) return;
+  const ok = await confirmBox('Delete item card?', 'Delete <b dir="auto">' + esc(it.name) + '</b> and its <b>' + it.movements.length + '</b> movements? This cannot be undone.');
+  if(!ok) return;
+  const loc = it.locationId;
+  state.items = state.items.filter(x => x.id !== id);
+  await saveState().catch(() => toast('Saving failed.', 'err'));
+  toast('Item card deleted.', 'ok');
+  location.hash = '#/l/' + encodeURIComponent(loc);
+  render();
+}
+
+function movementForm(item, mv){
+  formModal({
+    title: mv ? 'Edit Movement' : 'Add Movement',
+    hint: 'Fill <b>Incoming</b> or <b>Outgoing</b>. To record a physical inventory check, type <b>Jard</b> in the document number and leave both quantities empty. Jard never changes the balance.',
+    fields: [
+      { name: 'date', label: 'Date', type: 'date', value: mv ? mv.date : todayStr(), required: true, dir: 'ltr' },
+      { name: 'ref', label: 'M.R.V / MIV No.', value: mv ? mv.ref : '', required: true, max: 60 },
+      { name: 'inQty', label: 'Incoming', inputmode: 'decimal', value: mv && mv.type === 'in' ? String(mv.qty) : '', dir: 'ltr' },
+      { name: 'outQty', label: 'Outgoing', inputmode: 'decimal', value: mv && mv.type === 'out' ? String(mv.qty) : '', dir: 'ltr' }
+    ],
+    submit: mv ? 'Save changes' : 'Save movement',
+    onReady: form => {
+      const sync = () => {
+        const j = isJard(form.elements.ref.value);
+        ['inQty', 'outQty'].forEach(n => { const el = form.elements[n]; el.disabled = j; if(j) el.value = ''; });
+      };
+      form.elements.ref.addEventListener('input', sync);
+      sync();
+    },
+    onSubmit: async v => {
+      const r = buildMovement(v);
+      if(r.error) return r.error;
+      const m = r.movement;
+      const rest = item.movements.filter(x => !mv || x.id !== mv.id);
+      let usedSeq = false;
+      if(mv){ m.id = mv.id; m.seq = mv.seq; }
+      else{ m.id = uid(); m.seq = (item.seq || 0) + 1; usedSeq = true; }
+      const cand = rest.concat([m]);
+      const err = ledgerError(cand);
+      if(err) return err;
+      item.movements = cand;
+      if(usedSeq) item.seq = m.seq;
+      await commit(m.type === 'jard' ? 'Jard recorded. Balance unchanged.' : (mv ? 'Movement updated.' : 'Movement saved.'));
+    }
+  });
+}
+async function deleteMovement(itemId, mvId){
+  const it = state.items.find(x => x.id === itemId); if(!it) return;
+  const m = it.movements.find(x => x.id === mvId); if(!m) return;
+  const cand = it.movements.filter(x => x.id !== mvId);
+  const err = ledgerError(cand);
+  if(err){ toast('Cannot delete: it would make the balance negative. ' + err, 'err'); return; }
+  const ok = await confirmBox('Delete movement?', 'Delete the movement of <b>' + esc(m.date) + '</b> (<span dir="auto">' + esc(m.ref) + '</span>)? The balance will be recalculated.');
+  if(!ok) return;
+  it.movements = cand;
+  await commit('Movement deleted.');
+}
+
+/* ---- PIN ---- */
+async function setNewPin(pin){
+  const salt = randomSalt();
+  auth = { salt, iter: 20000, hash: hashPin(pin, salt, 20000), fails: 0, lockUntil: 0 };
+  await store.set('auth', auth);
+}
+async function tryUnlock(raw){
+  const now = Date.now();
+  if(auth.lockUntil && now < auth.lockUntil) return 'Too many attempts. Try again in ' + Math.ceil((auth.lockUntil - now) / 1000) + ' s.';
+  const p = normDigits(raw).trim();
+  if(!isValidPin(p)) return 'Enter your 6-digit PIN.';
+  if(safeEq(hashPin(p, auth.salt, auth.iter), auth.hash)){
+    auth.fails = 0; auth.lockUntil = 0;
+    await store.set('auth', auth).catch(() => {});
+    unlocked = true; resetIdle();
+    return null;
+  }
+  auth.fails = (auth.fails || 0) + 1;
+  if(auth.fails >= 5) auth.lockUntil = now + 30000 * Math.pow(2, Math.min(auth.fails - 5, 6));
+  await store.set('auth', auth).catch(() => {});
+  return 'Incorrect PIN.';
+}
+function changePinForm(){
+  formModal({
+    title: 'Change PIN',
+    fields: [
+      { name: 'cur', label: 'Current PIN', type: 'password', inputmode: 'numeric', max: 6, dir: 'ltr' },
+      { name: 'n1', label: 'New PIN (6 digits)', type: 'password', inputmode: 'numeric', max: 6, dir: 'ltr' },
+      { name: 'n2', label: 'Repeat new PIN', type: 'password', inputmode: 'numeric', max: 6, dir: 'ltr' }
+    ],
+    submit: 'Change PIN',
+    onSubmit: async v => {
+      const cur = normDigits(v.cur).trim(), n1 = normDigits(v.n1).trim(), n2 = normDigits(v.n2).trim();
+      if(!safeEq(hashPin(cur, auth.salt, auth.iter), auth.hash)) return 'The current PIN is incorrect.';
+      if(!isValidPin(n1)) return 'The new PIN must be exactly 6 digits.';
+      if(n1 !== n2) return 'The two new PINs do not match.';
+      try{ await setNewPin(n1); toast('PIN changed.', 'ok'); }
+      catch(e){ return 'Could not save the new PIN.'; }
+    }
+  });
+}
+function lockApp(){ unlocked = false; closeModal(); clearTimeout(idleTimer); render(); }
+function resetIdle(){
+  clearTimeout(idleTimer);
+  if(unlocked) idleTimer = setTimeout(lockApp, 15 * 60 * 1000);
+}
+['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
+
+/* ---- Backup / restore ---- */
+async function download(name, text){
+  /* Inside the native Android app (Capacitor) browser-style downloads do not work,
+     so write the file and open the system share sheet (Save to Files / Drive / WhatsApp...). */
+  const C = window.Capacitor;
+  if(C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.Filesystem && C.Plugins.Share){
+    try{
+      const w = await C.Plugins.Filesystem.writeFile({ path: name, data: text, directory: 'CACHE', encoding: 'utf8' });
+      await C.Plugins.Share.share({ title: name, url: w.uri, dialogTitle: 'Save backup file' });
+      return;
+    }catch(e){ if(e && /cancel/i.test(String(e.message || e))) return; toast('Could not export the file.', 'err'); return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function exportBackup(){
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  const stamp = d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+  download('SCOP-STORAGE-backup-' + stamp + '.json', JSON.stringify({ app: 'SCOP STORAGE SYSTEM', format: 1, exportedAt: d.toISOString(), data: state }, null, 2));
+  meta.lastBackupAt = Date.now(); saveMeta();
+  toast('Backup file downloaded.', 'ok'); setTimeout(render, 50);
+}
+function readFileText(file){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsText(file); });
+}
+async function importBackup(file){
+  let parsed;
+  try{ parsed = JSON.parse(await readFileText(file)); }
+  catch(e){ toast('The selected file is not a valid backup (cannot read it).', 'err'); return; }
+  const v = normalizeData(parsed, true);
+  if(!v.ok){ toast('Restore cancelled: ' + v.error, 'err'); return; }
+  let mv = 0; v.data.items.forEach(i => { mv += i.movements.length; });
+  const ok = await confirmBox('Restore backup?', 'This replaces ALL current data with the backup: <b>' + v.data.sections.length + '</b> sections, <b>' + v.data.locations.length + '</b> locations, <b>' + v.data.items.length + '</b> item cards, <b>' + mv + '</b> movements. A safety copy of the current data is kept.', 'Restore', false);
+  if(!ok) return;
+  try{
+    await store.set('prebackup', JSON.parse(JSON.stringify(state)));
+    meta.prebackupAt = Date.now(); await saveMeta();
+  }catch(e){ toast('Could not make a safety copy. Restore cancelled.', 'err'); return; }
+  state = v.data;
+  await commit('Backup restored.');
+}
+async function undoRestore(){
+  const snap = await store.get('prebackup');
+  const v = snap && normalizeData(snap, false);
+  if(!v || !v.ok){ toast('No safety copy available.', 'err'); return; }
+  const ok = await confirmBox('Undo last restore?', 'Go back to the data you had before the last restore? Current data will be replaced.', 'Undo restore', false);
+  if(!ok) return;
+  state = v.data;
+  await commit('Previous data restored.');
+}
+
+/* =====================================================================
+   PART 8 — EVENTS
+   ===================================================================== */
+const ACTIONS = {
+  'add-section': () => sectionForm(null),
+  'edit-section': id => sectionForm(state.sections.find(s => s.id === id)),
+  'del-section': id => deleteSection(id),
+  'add-loc': id => locationForm(id, null),
+  'edit-loc': id => locationForm(null, state.locations.find(l => l.id === id)),
+  'del-loc': id => deleteLocation(id),
+  'add-item': id => itemForm(id, null),
+  'edit-item': id => itemForm(null, state.items.find(i => i.id === id)),
+  'del-item': id => deleteItem(id),
+  'add-mv': id => movementForm(state.items.find(i => i.id === id), null),
+  'edit-mv': (id, el) => { const it = state.items.find(i => i.id === id); movementForm(it, it.movements.find(m => m.id === el.dataset.mv)); },
+  'del-mv': (id, el) => deleteMovement(id, el.dataset.mv),
+  'jump-latest': () => { const lw = $('#ledger'); if(lw) lw.scrollTo({ top: lw.scrollHeight, behavior: 'smooth' }); },
+  'lock': () => lockApp(),
+  'export': () => exportBackup(),
+  'import': () => $('#importFile').click(),
+  'undo-restore': () => undoRestore(),
+  'change-pin': () => changePinForm(),
+  'dl-raw': () => download('SCOP-STORAGE-raw-data.json', JSON.stringify(fatal.raw, null, 2))
+};
+document.addEventListener('click', e => {
+  if(e.target.closest('[data-close]')){ cancelModal(); return; }
+  const el = e.target.closest('[data-act]');
+  if(!el) return;
+  const fn = ACTIONS[el.dataset.act];
+  if(fn){ e.preventDefault(); fn(el.dataset.id, el); }
+});
+document.addEventListener('change', e => {
+  if(e.target.id === 'importFile' && e.target.files[0]){
+    const f = e.target.files[0]; e.target.value = '';
+    importBackup(f);
+  }
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && $('#modal-root').firstChild) cancelModal(); });
+document.addEventListener('input', e => {
+  if(e.target.name === 'pin' && e.target.closest('[data-form=unlock]') && normDigits(e.target.value).length === 6){
+    e.target.closest('form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+  }
+});
+document.addEventListener('submit', async e => {
+  const f = e.target.closest('[data-form]');
+  if(!f) return;
+  e.preventDefault();
+  const kind = f.dataset.form, errEl = f.querySelector('.err');
+  if(kind === 'search'){
+    const q = clean(f.elements.q.value);
+    location.hash = q ? '#/search/' + encodeURIComponent(q) : '#/';
+    if(!q) render();
+  }else if(kind === 'setup'){
+    const p1 = normDigits(f.elements.pin.value).trim(), p2 = normDigits(f.elements.pin2.value).trim();
+    if(!isValidPin(p1)){ errEl.textContent = 'The PIN must be exactly 6 digits.'; return; }
+    if(p1 !== p2){ errEl.textContent = 'The two PINs do not match.'; return; }
+    try{ await setNewPin(p1); }catch(err){ errEl.textContent = 'Could not save the PIN on this device.'; return; }
+    unlocked = true; resetIdle();
+    toast('PIN created.', 'ok'); render();
+  }else if(kind === 'unlock'){
+    if(f.dataset.busy) return;
+    f.dataset.busy = '1';
+    const msg = await tryUnlock(f.elements.pin.value);
+    delete f.dataset.busy;
+    if(msg){ errEl.textContent = msg; f.elements.pin.value = ''; f.elements.pin.focus(); } else render();
+  }
+});
+
+/* =====================================================================
+   PART 9 — START
+   ===================================================================== */
+(async function init(){
+  await store.open();
+  try{
+    auth = await store.get('auth');
+    meta = (await store.get('meta')) || {};
+    const raw = await store.get('data');
+    if(raw === null){
+      state = seedState();
+      await store.set('data', state);
+    }else{
+      const v = normalizeData(raw, false);
+      if(v.ok) state = v.data; else fatal = { message: v.error, raw };
+    }
+    if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  }catch(e){
+    fatal = { message: 'Local storage is unavailable: ' + e.message, raw: null };
+  }
+  render();
+  /* Offline app shell (only when served over http/https; does not touch stored data) */
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
