@@ -364,6 +364,49 @@ function normalizeData(raw, strict){
   }catch(e){ return { ok: false, error: e.message }; }
   return { ok: true, data: out };
 }
+/* Merge another backup into existing data (combine cards entered on several devices).
+   Sections / locations are matched by name, item cards by name + vocab + bin.
+   Movements are added by id (no duplicates); anything that would make a balance negative is skipped. */
+function mergeData(base, incoming){
+  const out = JSON.parse(JSON.stringify(base));
+  const stats = { sections: 0, locations: 0, items: 0, movements: 0, conflicts: [] };
+  const key = s => String(s || '').trim().toLowerCase();
+  const used = new Set([].concat(out.sections, out.locations, out.items).map(x => x.id));
+  const claim = id => { if(used.has(id)) id = uid() + Math.random().toString(36).slice(2, 5); used.add(id); return id; };
+  const secMap = {}, locMap = {};
+  for(const s of incoming.sections){
+    let hit = out.sections.find(x => key(x.name) === key(s.name));
+    if(!hit){ hit = { id: claim(s.id), name: s.name }; out.sections.push(hit); stats.sections++; }
+    secMap[s.id] = hit.id;
+  }
+  for(const l of incoming.locations){
+    const sid = secMap[l.sectionId];
+    let hit = out.locations.find(x => x.sectionId === sid && key(x.name) === key(l.name));
+    if(!hit){ hit = { id: claim(l.id), sectionId: sid, name: l.name }; out.locations.push(hit); stats.locations++; }
+    locMap[l.id] = hit.id;
+  }
+  const ikey = i => key(i.name) + '|' + key(i.vocab) + '|' + key(i.bin);
+  for(const it of incoming.items){
+    const lid = locMap[it.locationId];
+    const inc = it.movements.slice().sort((a, b) => (a.seq || 0) - (b.seq || 0));
+    const hit = out.items.find(x => x.locationId === lid && ikey(x) === ikey(it));
+    if(!hit){
+      out.items.push({ id: claim(it.id), locationId: lid, name: it.name, vocab: it.vocab, bin: it.bin, unit: it.unit,
+        description: it.description, seq: it.seq, movements: inc.map(m => Object.assign({}, m)) });
+      stats.items++; stats.movements += inc.length;
+      continue;
+    }
+    const have = new Set(hit.movements.map(m => m.id));
+    const add = inc.filter(m => !have.has(m.id));
+    if(!add.length) continue;
+    let seq = hit.seq || 0;
+    const cand = hit.movements.concat(add.map(m => Object.assign({}, m, { seq: ++seq })));
+    const err = ledgerError(cand);
+    if(err){ stats.conflicts.push(it.name + ': ' + err); continue; }
+    hit.movements = cand; hit.seq = seq; stats.movements += add.length;
+  }
+  return { data: out, stats };
+}
 /*LOGIC-END*/
 
 /* =====================================================================
@@ -665,6 +708,9 @@ function viewBackup(){
     '<div class="row"><button class="btn" data-act="import">' + ico('ul') + ' Choose backup file</button>' +
     (meta.prebackupAt ? '<button class="btn" data-act="undo-restore">Undo last restore</button>' : '') + '</div>' +
     '<input type="file" id="importFile" accept=".json,application/json" hidden></div>' +
+    '<div class="card pad"><h3>Merge a backup (combine devices)</h3><p>Adds another device’s backup to your current data. Existing data is kept. Sections and locations are matched by name, item cards by name + vocab + bin, and movements already present are skipped.</p>' +
+    '<button class="btn primary" data-act="merge">' + ico('ul') + ' Merge backup file</button>' +
+    '<input type="file" id="mergeFile" accept=".json,application/json" hidden></div>' +
     '<div class="card pad"><h3>Access PIN</h3><p>Change the six-digit PIN used to open the app.</p><button class="btn" data-act="change-pin">Change PIN</button></div>' +
     '<div class="card pad"><h3>Stored data</h3>' +
     '<div class="stat"><span>Sections</span><b>' + state.sections.length + '</b></div><div class="stat"><span>Storage locations</span><b>' + state.locations.length + '</b></div>' +
@@ -947,6 +993,27 @@ async function importBackup(file){
   state = v.data;
   await commit('Backup restored.');
 }
+async function mergeBackup(file){
+  let parsed;
+  try{ parsed = JSON.parse(await readFileText(file)); }
+  catch(e){ toast('The selected file is not a valid backup (cannot read it).', 'err'); return; }
+  const v = normalizeData(parsed, true);
+  if(!v.ok){ toast('Merge cancelled: ' + v.error, 'err'); return; }
+  const r = mergeData(state, v.data), s = r.stats;
+  if(!s.sections && !s.locations && !s.items && !s.movements && !s.conflicts.length){ toast('Nothing new to merge. This backup is already included.', 'ok'); return; }
+  const conf = s.conflicts.length
+    ? '<p><b>' + s.conflicts.length + ' item(s) skipped</b> because they would make a balance negative:<br>' +
+      s.conflicts.slice(0, 5).map(c => '• <span dir="auto">' + esc(c) + '</span>').join('<br>') + (s.conflicts.length > 5 ? '<br>…' : '') + '</p>'
+    : '';
+  const ok = await confirmBox('Merge backup?', 'This will add: <b>' + s.sections + '</b> sections, <b>' + s.locations + '</b> locations, <b>' + s.items + '</b> item cards and <b>' + s.movements + '</b> movements to your current data. Nothing is removed.' + conf, 'Merge', false);
+  if(!ok) return;
+  try{
+    await store.set('prebackup', JSON.parse(JSON.stringify(state)));
+    meta.prebackupAt = Date.now(); await saveMeta();
+  }catch(e){ toast('Could not make a safety copy. Merge cancelled.', 'err'); return; }
+  state = r.data;
+  await commit('Backup merged.');
+}
 async function undoRestore(){
   const snap = await store.get('prebackup');
   const v = snap && normalizeData(snap, false);
@@ -978,6 +1045,7 @@ const ACTIONS = {
   'export': () => exportBackup(),
   'import': () => $('#importFile').click(),
   'undo-restore': () => undoRestore(),
+  'merge': () => $('#mergeFile').click(),
   'change-pin': () => changePinForm(),
   'dl-raw': () => download('SCOP-STORAGE-raw-data.json', JSON.stringify(fatal.raw, null, 2))
 };
@@ -989,9 +1057,9 @@ document.addEventListener('click', e => {
   if(fn){ e.preventDefault(); fn(el.dataset.id, el); }
 });
 document.addEventListener('change', e => {
-  if(e.target.id === 'importFile' && e.target.files[0]){
-    const f = e.target.files[0]; e.target.value = '';
-    importBackup(f);
+  if((e.target.id === 'importFile' || e.target.id === 'mergeFile') && e.target.files[0]){
+    const f = e.target.files[0], merge = e.target.id === 'mergeFile'; e.target.value = '';
+    if(merge) mergeBackup(f); else importBackup(f);
   }
 });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && $('#modal-root').firstChild) cancelModal(); });

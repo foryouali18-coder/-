@@ -1,7 +1,7 @@
 /* SCOP STORAGE SYSTEM — offline app shell.
    Caches only the app files. Warehouse data lives in IndexedDB and is never touched here.
    To ship an update, change VERSION; users keep all their data. */
-const VERSION = 'scop-shell-v1';
+const VERSION = 'scop-shell-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './maskable-512.png'];
 
 self.addEventListener('install', e => {
